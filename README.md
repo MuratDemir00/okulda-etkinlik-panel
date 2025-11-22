@@ -1,0 +1,1 @@
+# okulda-etkinlik-panel
