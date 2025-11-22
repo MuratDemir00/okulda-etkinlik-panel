@@ -1,0 +1,339 @@
+/* ----------------------------------------------------
+   Minimal Soft Dark UI – Göz yormayan, sade, modern
+---------------------------------------------------- */
+
+/* Theme Colors */
+:root {
+    --bg: #111418;
+    --card: #181c22;
+    --line: #2a2f37;
+    --text: #e8eaed;
+    --muted: #9ba3af;
+    --accent: #4ade80;
+    --accent-hover: #22c55e;
+    --warn: #ef4444;
+    --warn-hover: #dc2626;
+}
+
+/* Reset */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Body */
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", system-ui, -apple-system, Roboto, sans-serif;
+    font-size: 15px;
+}
+
+/* Header */
+header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    background: #0d1116;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+h1 {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+}
+
+.tab {
+    background: #1f242b;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+
+.tab:hover {
+    background: #242a32;
+}
+
+.tab.active {
+    background: var(--accent);
+    color: #061a10;
+    border-color: #0d2517;
+    font-weight: 600;
+}
+
+/* Main */
+main {
+    padding: 20px;
+    display: grid;
+    gap: 20px;
+}
+
+/* Cards */
+.card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+}
+
+h2, h3, h4 {
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+/* Rows */
+.row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Inputs */
+input,
+select,
+textarea {
+    background: #101418;
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 8px;
+    min-width: 180px;
+    transition: 0.2s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.2);
+}
+
+textarea {
+    min-height: 90px;
+}
+
+/* Buttons */
+.btn {
+    background: #1d2228;
+    border: 1px solid var(--line);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text);
+    transition: 0.2s;
+}
+
+.btn:hover {
+    background: #232830;
+}
+
+.btn.primary {
+    background: var(--accent);
+    color: #04150b;
+    border-color: #0d3a20;
+}
+
+.btn.primary:hover {
+    background: var(--accent-hover);
+}
+
+.btn.warn {
+    background: var(--warn);
+    color: #280808;
+}
+
+.btn.warn:hover {
+    background: var(--warn-hover);
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th {
+    background: #1f242b;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+td, th {
+    border-bottom: 1px solid var(--line);
+    padding: 8px 6px;
+}
+
+td {
+    font-size: 14px;
+}
+
+/* Pills */
+.pill {
+    background: #101418;
+    border: 1px solid var(--line);
+    padding: 6px 10px;
+    border-radius: 20px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.small { font-size: 13px; }
+.mono { font-family: monospace; }
+
+.help {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.hr {
+    height: 1px;
+    background: var(--line);
+    margin: 16px 0;
+}
+
+/* Hidden */
+.hidden {
+    display: none !important;
+}
+
+/* Content preview */
+.content-preview {
+    max-width: 300px;
+    max-height: 48px;
+    overflow: hidden;
+    line-height: 1.4;
+    transition: 0.25s ease;
+}
+
+.content-preview:hover {
+    max-height: 240px;
+    background: #0c1014;
+    padding: 6px;
+    border-radius: 6px;
+}
+
+
+#appSettings .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
+    margin-top: 10px;
+}
+
+#appSettings label {
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+    gap: 6px;
+    color: var(--muted);
+}
+
+/* Checkbox modern görünüm */
+#appSettings input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+/* Number input */
+#as-every {
+    max-width: 120px;
+}
+
+/* Card padding daha modern */
+#appSettings.card {
+    padding: 22px;
+}
+
+/* Save button sola yaslansın */
+#as-save {
+    margin-top: 8px;
+    width: 130px;
+}
+
+/* Başlık daha modern */
+#appSettings h2 {
+    margin-bottom: 14px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+/* Small help text */
+#as-status {
+    margin-left: 8px;
+}
+
+.top-switch {
+    width: 100%;
+    padding: 12px 20px;
+    background: #0d1116;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: flex-start;
+}
+
+.top-switch .btn {
+    font-size: 14px;
+    padding: 6px 12px;
+}
+
+/* Responsive */
+@media (max-width: 780px) {
+
+    header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    input, textarea, select {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .grid-2,
+    .grid-3 {
+        grid-template-columns: 1fr !important;
+    }
+
+    table {
+        overflow-x: auto;
+        display: block;
+        white-space: nowrap;
+    }
+
+    .pill {
+        flex-wrap: wrap;
+    }
+     #appSettings .grid-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+
