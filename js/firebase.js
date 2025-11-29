@@ -26,6 +26,9 @@ export const firebaseConfig = {
   measurementId: "G-7Z4LBDZ169",
 };
 
+// Panel base path — GITHUB PAGES İÇİN ZORUNLU
+const BASE = "/okulda-etkinlik-panel/";
+
 // ======================
 // Initialize
 // ======================
@@ -37,24 +40,28 @@ export const auth = getAuth(app);
 // Admin kontrol fonksiyonu
 // ======================
 export async function requireAdmin() {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     onAuthStateChanged(auth, async (user) => {
+      // Kullanıcı yok → login'e yönlendir
       if (!user) {
-        window.location.href = "login.html";
+        window.location.href = BASE + "login.html";
         return;
       }
 
+      // Admin kontrolü
       const ref = doc(db, "admins", user.uid);
       const snap = await getDoc(ref);
 
+      // Admin değil
       if (!snap.exists()) {
         alert("Bu panel için yetkiniz yok.");
         await signOut(auth);
-        window.location.href = "login.html";
+        window.location.href = BASE + "login.html";
         return;
       }
 
-      resolve(user); // admin kabul edildi
+      // Admin → girişe izin ver
+      resolve(user);
     });
   });
 }
@@ -70,5 +77,6 @@ export async function login(email, password) {
 // Logout helper
 // ======================
 export async function logout() {
-  return signOut(auth);
+  await signOut(auth);
+  window.location.href = BASE + "login.html";
 }

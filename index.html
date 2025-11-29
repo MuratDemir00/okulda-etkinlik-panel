@@ -301,19 +301,25 @@
         </section>
     </main>
 
+    <!-- ===================== -->
+    <!-- FIRST: ADMIN CHECK -->
+    <!-- ===================== -->
+    <script type="module">
+        import { requireAdmin } from "./js/firebase.js";
+        requireAdmin();  // admin değilse anında login.html’e atar
+    </script>
+
+    <!-- ===================== -->
+    <!-- LOGOUT BUTTON -->
+    <!-- ===================== -->
     <script type="module">
         import { logout } from "./js/firebase.js";
 
         document.getElementById("logoutBtn").onclick = async () => {
-            await logout();
-            window.location.href = "login.html";
+            await logout();   // yönlendirmeyi firebase.js içinde otomatik yapıyoruz
         };
     </script>
 
-    <script type="module">
-        import { requireAdmin } from "./js/firebase.js";
-        requireAdmin(); // 🔥 admin değilse login.html’e atar
-    </script>
 
     <script type="module" src="./js/firebase.js"></script>
     <script type="module" src="./js/helpers.js"></script>
