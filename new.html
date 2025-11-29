@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Firestore Yönetim Paneli</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="stylesheet" href="css/styles.css">
+
+</head>
+
+<body>
+    <div class="top-switch">
+        <button onclick="location.href='old.html'" class="btn primary small">
+            ⬅️ Eski Görünüme Git
+        </button>
+        <button id="logoutBtn" class="btn warn small">
+            🚪 Çıkış Yap
+        </button>
+    </div>
+
+    <header>
+        <h1>📚 Firestore Yönetim Paneli</h1>
+        <div class="tabs">
+            <button class="tab active" data-tab="movingTexts">movingTexts</button>
+            <button class="tab" data-tab="appSettings">app_settings / ads</button>
+            <button class="tab" data-tab="topCategories">topCategories</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- movingTexts -->
+        <section id="movingTexts" class="card">
+            <h2>📝 movingTexts</h2>
+            <div class="row">
+                <input id="mt-text" placeholder="Metin..." />
+                <button class="btn primary" id="mt-add">Ekle</button>
+                <span id="mt-status" class="help"></span>
+            </div>
+            <div class="hr"></div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Doc ID</th>
+                        <th>text</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody id="mt-list"></tbody>
+            </table>
+        </section>
+
+        <!-- app_settings / ads -->
+        <section id="appSettings" class="card hidden">
+            <h2>⚙️ app_settings / <code>ads</code></h2>
+            <div class="grid-3">
+                <label>bannerEnabled<br><input type="checkbox" id="as-banner" /></label>
+                <label>interstitialEnabled<br><input type="checkbox" id="as-interstitial" /></label>
+                <label>showEveryX<br><input type="number" id="as-every" min="1" step="1" /></label>
+                <label>useTestBannerIds<br><input type="checkbox" id="as-testb" /></label>
+                <label>useTestInterstitialIds<br><input type="checkbox" id="as-testi" /></label>
+            </div>
+            <div class="row" style="margin-top:10px">
+                <button class="btn primary" id="as-save">Kaydet</button>
+                <span id="as-status" class="help"></span>
+            </div>
+        </section>
+
+        <!-- topCategories -->
+        <section id="topCategories" class="card hidden">
+
+            <h2>🗂️ topCategories</h2>
+            <!-- 🔥 Sort Order butonu (BURAYI YENİ EKLE) -->
+            <div class="row" style="margin-bottom: 10px;">
+                <button class="btn primary" id="fix-sort-order">Sort Order Düzelt / Ekle</button>
+                <span id="sort-status" class="help"></span>
+            </div>
+            <!-- 🔥 /Sort Order butonu -->
+
+
+            <!-- Kategori ekle/düzenle -->
+            <div class="card" style="margin-bottom:12px">
+                <div class="row">
+                    <input id="tc-id" placeholder="id (ör: funny_texts)" />
+                    <input id="tc-name" placeholder="name" />
+                    <input id="tc-image" placeholder="imageUrl (https://...)" />
+                    <input id="tc-sort" type="number" placeholder="sort_order (opsiyonel)" />
+                    <input id="tc-type" placeholder='type (opsiyonel, ör: "grades" / "special" / "simple")' />
+                    <button class="btn primary" id="tc-save">Kaydet / Güncelle</button>
+                    <span id="tc-status" class="help"></span>
+                </div>
+            </div>
+
+            <!-- Kategoriler Listesi -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>id</th>
+                        <th>name</th>
+                        <th>imageUrl</th>
+                        <th class="small">sort/type</th>
+                        <th>Alt Kategori</th>
+                        <th>Sil</th>
+                    </tr>
+                </thead>
+                <tbody id="tc-list"></tbody>
+            </table>
+
+            <!-- Alt kategori yöneticisi -->
+            <div id="sc-box" class="card hidden" style="margin-top:16px">
+                <h3>📎 SubCategories — <span id="sc-category-label" class="muted"></span></h3>
+
+                <div class="row">
+                    <input id="sc-id" placeholder="id (ör: bilmece)" />
+                    <input id="sc-name" placeholder="name" />
+                    <div class="pill">
+                        <span class="muted small">availableTypes</span>
+                        <label class="small"><input type="checkbox" class="sc-type" value="text"> text</label>
+                        <label class="small"><input type="checkbox" class="sc-type" value="image"> image</label>
+                        <label class="small"><input type="checkbox" class="sc-type" value="video"> video</label>
+                        <label class="small"><input type="checkbox" class="sc-type" value="audio"> audio</label>
+                        <label class="small"><input type="checkbox" class="sc-type" value="activity"> activity</label>
+                        <label class="small"><input type="checkbox" class="sc-type" value="pdf"> pdf</label>
+                    </div>
+                    <button class="btn primary" id="sc-save">Alt Kategori Kaydet</button>
+                    <span id="sc-status" class="help"></span>
+                </div>
+
+                <div class="hr"></div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>id</th>
+                            <th>name</th>
+                            <th>availableTypes</th>
+                            <th>Düzenle</th>
+                            <th>Sil</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sc-list"></tbody>
+                </table>
+
+                <!-- funny_texts için items -->
+                <div id="items-box" class="card hidden" style="margin-top:16px">
+                    <h4>🎯 Items (sadece <code>funny_texts</code> ve <code>special_days</code> kategorileri için)</h4>
+
+                    <div class="row">
+
+                        <select id="it-type">
+                            <option value="text">text</option>
+                            <option value="image">image</option>
+                            <option value="video">video</option>
+                            <option value="audio">audio</option>
+                            <option value="pdf">pdf</option>
+                        </select>
+                        <input id="it-title" placeholder="title" />
+                    </div>
+
+                    <div class="row" style="margin-top:8px">
+                        <textarea id="it-text" class="item-field item-text hidden"
+                            placeholder="text (type=text ise)"></textarea>
+                        <input id="it-image" class="item-field item-image hidden"
+                            placeholder="imageUrl (type=image ise)" />
+                        <input id="it-video" class="item-field item-video hidden"
+                            placeholder="videoUrl (type=video ise)" />
+                        <input id="it-audio" class="item-field item-audio hidden"
+                            placeholder="audioUrl (type=audio ise)" />
+                        <input id="it-pdf" class="item-field item-pdf hidden" placeholder="pdfUrl (type=pdf ise)" />
+
+                        <button class="btn primary" id="it-save">Item Kaydet</button>
+                        <span id="it-status" class="help"></span>
+                    </div>
+
+
+                    <div class="hr"></div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>id</th>
+                                <th>type</th>
+                                <th>title</th>
+                                <th>İçerik</th>
+                                <th>Sil</th>
+                            </tr>
+                        </thead>
+                        <tbody id="it-list"></tbody>
+                    </table>
+                </div>
+
+                <!-- GRADES DERS / KONU / İÇERİK YÖNETİCİSİ -->
+                <div id="grades-box" class="card hidden" style="margin-top:16px">
+                    <h3>📚 Dersler (Lessons)</h3>
+                    <span id="lesson-status" class="help"></span>
+
+                    <div class="row">
+                        <input id="lesson-id" placeholder="Ders id (ör: fen)" />
+                        <input id="lesson-name" placeholder="Ders adı (Örn: Fen Bilimleri)" />
+                        <button class="btn primary" id="lesson-save">Ders Kaydet</button>
+                    </div>
+
+                    <div class="hr"></div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>id</th>
+                                <th>name</th>
+                                <th>Konular</th>
+                                <th>Sil</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lesson-list"></tbody>
+                    </table>
+
+                    <div id="topics-box" class="card hidden" style="margin-top:16px">
+                        <h4>📘 Konular (Topics) — <span id="lesson-label"></span></h4>
+                        <span id="topic-status" class="help"></span>
+
+                        <div class="row">
+                            <input id="topic-id" placeholder="Konu id (ör: besinler)" />
+                            <input id="topic-name" placeholder="Konu adı (Örn: Besinler)" />
+                            <button class="btn primary" id="topic-save">Konu Kaydet</button>
+                        </div>
+
+                        <div class="hr"></div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>id</th>
+                                    <th>name</th>
+                                    <th>İçerik</th>
+                                    <th>Sil</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topic-list"></tbody>
+                        </table>
+
+                        <div id="content-box" class="card hidden" style="margin-top:16px">
+                            <h4>📂 İçerikler — <span id="topic-label"></span></h4>
+                            <span id="content-status" class="help"></span>
+
+
+                            <div class="grid-3" style="margin-bottom:12px">
+                                <label class="small muted">İçerik Türü
+                                    <select id="content-type">
+                                        <option value="text">Metin</option>
+                                        <option value="image">Görsel</option>
+                                        <option value="audio">Ses</option>
+                                        <option value="video">Video</option>
+                                        <option value="pdf">PDF</option>
+                                        <option value="activity">Etkinlik</option>
+                                    </select>
+                                </label>
+
+                                <label class="small muted">İçerik ID
+                                    <input id="content-id" placeholder="Örn: besinler_siir_1" />
+                                </label>
+
+                                <label class="small muted">Başlık
+                                    <input id="content-title" placeholder="Başlık" />
+                                </label>
+                            </div>
+
+                            <div class="grid-2" style="margin-bottom:12px">
+                                <textarea id="content-text" placeholder="Metin / Etkinlik için içerik"
+                                    class="content-field content-text"></textarea>
+
+                                <input id="content-image" placeholder="imageUrl (Görsel)"
+                                    class="content-field content-image hidden" />
+                                <input id="content-audio" placeholder="audioUrl (Ses)"
+                                    class="content-field content-audio hidden" />
+                                <input id="content-video" placeholder="videoUrl (Video)"
+                                    class="content-field content-video hidden" />
+                                <input id="content-pdf" placeholder="pdfUrl (PDF)"
+                                    class="content-field content-pdf hidden" />
+                            </div>
+
+                            <button class="btn primary" id="content-save" style="margin-bottom:10px">➕ İçerik
+                                Ekle</button>
+
+                            <div class="hr"></div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>id</th>
+                                        <th>Başlık</th>
+                                        <th>Tür</th>
+                                        <th>İçerik</th>
+                                        <th>Sil</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="content-list"></tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- ===================== -->
+    <!-- FIRST: ADMIN CHECK -->
+    <!-- ===================== -->
+    <script type="module">
+        import { requireAdmin } from "./js/firebase.js";
+        requireAdmin();  // admin değilse anında login.html’e atar
+    </script>
+
+    <!-- ===================== -->
+    <!-- LOGOUT BUTTON -->
+    <!-- ===================== -->
+    <script type="module">
+        import { logout } from "./js/firebase.js";
+
+        document.getElementById("logoutBtn").onclick = async () => {
+            await logout();   // yönlendirmeyi firebase.js içinde otomatik yapıyoruz
+        };
+    </script>
+
+
+    <script type="module" src="./js/firebase.js"></script>
+    <script type="module" src="./js/helpers.js"></script>
+    <script type="module" src="./js/tabs.js"></script>
+
+    <script type="module" src="./js/movingTexts.js"></script>
+    <script type="module" src="./js/appSettings.js"></script>
+
+    <script type="module" src="./js/categories.js"></script>
+    <script type="module" src="./js/subCategories.js"></script>
+    <script type="module" src="./js/items.js"></script>
+    <script type="module" src="./js/grades.js"></script>
+    <script type="module" src="./js/topics.js"></script>
+    <script type="module" src="./js/content.js"></script>
+
+    <script type="module" src="./js/sortFixer.js"></script>
+
+</body>
+
+</html>
