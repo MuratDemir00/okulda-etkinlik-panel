@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Giriş</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Login sayfasına özel ek stil */
+        .login-wrapper {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+        }
+
+        .login-card {
+            background: var(--card);
+            padding: 32px 28px;
+            width: 100%;
+            max-width: 380px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            text-align: center;
+        }
+
+        .login-card h2 {
+            margin-bottom: 20px;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .login-card input {
+            width: 100%;
+            margin-bottom: 14px;
+        }
+
+        #status {
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--warn);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 10px;
+            font-size: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-wrapper">
+        <div class="login-card">
+            <h2>🔑 Admin Giriş</h2>
+
+            <input id="email" type="email" placeholder="Email">
+            <input id="password" type="password" placeholder="Şifre">
+
+            <button id="loginBtn" class="btn primary btn-login">Giriş Yap</button>
+
+            <p id="status"></p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { login } from "./js/firebase.js";
+
+        const emailInput = document.getElementById("email");
+        const passInput = document.getElementById("password");
+        const statusEl = document.getElementById("status");
+
+        document.getElementById("loginBtn").onclick = async () => {
+            const email = emailInput.value;
+            const pass = passInput.value;
+
+            if (!email || !pass) {
+                statusEl.textContent = "Email ve şifre gerekli.";
+                return;
+            }
+
+            statusEl.textContent = "Giriş yapılıyor...";
+
+            try {
+                await login(email, pass);
+                window.location.href = "index.html";
+            } catch (err) {
+                statusEl.textContent = "Hatalı giriş: " + err.message;
+            }
+        };
+    </script>
+
+</body>
+
+</html>

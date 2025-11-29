@@ -13,6 +13,29 @@ let currentLessonId = null;
 let currentTopicId = null;
 let currentContentCount = 0;
 
+// Basit slugify (Türkçe karakter temizleme)
+function slugify(str) {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ş/g, "s")
+    .replace(/ü/g, "u")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "");
+}
+function humanize(str) {
+  return str
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 export async function openContent(lessonId, topicId) {
   currentLessonId = lessonId;
   currentTopicId = topicId;
@@ -42,6 +65,7 @@ async function loadContent() {
     return;
 
   const type = $("#content-type").value;
+
   const ref = doc(
     db,
     "topCategories",
@@ -80,21 +104,21 @@ async function loadContent() {
 
     rows += `
 <tr>
-    <td>${item.id}</td>
-    <td>${item.title || ""}</td>
-    <td>${item.type}</td>
-    <td class="small mono">${content.slice(0, 60)}${
+  <td>${item.id}</td>
+  <td>${item.title || ""}</td>
+  <td>${item.type}</td>
+  <td class="small mono">${content.slice(0, 60)}${
       content.length > 60 ? "…" : ""
     }</td>
-    <td><button class="btn warn small" data-del-content="${
-      item.id
-    }">Sil</button></td>
+  <td><button class="btn warn small" data-del-content="${
+    item.id
+  }">Sil</button></td>
 </tr>`;
   });
 
   listEl.innerHTML = rows;
 
-  // Sil butonları
+  // Sil
   listEl.querySelectorAll("[data-del-content]").forEach((btn) => {
     btn.onclick = async () => {
       const snap2 = await getDoc(ref);
@@ -111,14 +135,14 @@ async function loadContent() {
   autoFillNewContentFields();
 }
 
-// içerik türü değişince
+// Tür değişince
 $("#content-type").addEventListener("change", async () => {
   updateContentFieldVisibility();
   clearIrrelevantFields($("#content-type").value);
   await loadContent();
 });
 
-// içerik kaydet
+// Kaydet
 $("#content-save").onclick = async () => {
   if (
     !currentCategoryId ||
@@ -185,7 +209,9 @@ $("#content-save").onclick = async () => {
   await loadContent();
 };
 
-// alan görünürlüğü
+// ------------------------------
+// Alan görünürlüğü
+// ------------------------------
 function updateContentFieldVisibility() {
   const t = $("#content-type").value;
 
@@ -208,14 +234,24 @@ function clearIrrelevantFields(keepType) {
   if (keepType !== "pdf") $("#content-pdf").value = "";
 }
 
+// ------------------------------
+// 🔥 OTOMATİK ID ÜRETEÇ
+// ------------------------------
 function autoFillNewContentFields() {
   if (!currentTopicId) return;
 
   const type = $("#content-type").value;
 
-  $("#content-id").value = `${currentTopicId}_${type}_${currentContentCount}`;
+  // 🔥 SubCategory: "grade_4" → "g4"
+  let gradePart = currentSubCategoryId.replace("grade_", "g");
 
-  const topicName = $("#topic-label").textContent || currentTopicId;
+  gradePart = slugify(gradePart);
+  const lessonPart = slugify(currentLessonId);
+  const topicPart = slugify(currentTopicId);
+  const typePart = slugify(type);
+
+  const id = `${gradePart}_${lessonPart}_${topicPart}_${typePart}_${currentContentCount}`;
+  $("#content-id").value = id;
 
   const typeNames = {
     text: "Metin",
@@ -226,7 +262,10 @@ function autoFillNewContentFields() {
     activity: "Etkinlik",
   };
 
+  // 🔥 Başlık düzgün Türkçeleştirilmiş
+  const readableTopicName = humanize(topicPart);
+
   $(
     "#content-title"
-  ).value = `${topicName} ${typeNames[type]} ${currentContentCount}`;
+  ).value = `${readableTopicName} ${typeNames[type]} ${currentContentCount}`;
 }

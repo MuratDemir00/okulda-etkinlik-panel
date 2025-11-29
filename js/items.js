@@ -6,19 +6,54 @@ import {
   getDocs,
   doc,
   deleteDoc,
-  updateDoc,
   setDoc,
+  writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import { currentCategoryId, currentSubCategoryId } from "./subCategories.js";
 
-export async function loadItems() {
-  if (!currentCategoryId || !currentSubCategoryId) return;
+// -------------------------------------------------------------
+// HELPER FUNCTIONS
+// -------------------------------------------------------------
+function slugify(str) {
+  return (str || "")
+    .toLowerCase()
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ş/g, "s")
+    .replace(/ü/g, "u")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
 
-  const listEl = $("#it-list");
-  listEl.innerHTML = "<tr><td colspan='5' class='muted'>Yükleniyor…</td></tr>";
+// okunabilir hale çevir (Guzel Davranislarimiz)
+function toReadable(str) {
+  if (!str) return "";
+  return str.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
+}
 
-  const path = collection(
+function typeToReadable(type) {
+  const map = {
+    text: "Metin",
+    image: "Görsel",
+    audio: "Ses",
+    video: "Video",
+    pdf: "PDF",
+    activity: "Etkinlik",
+  };
+  return map[type] || type;
+}
+
+// GLOBAL
+window.currentLessonId = null;
+window.currentTopicId = null;
+
+// Koleksiyon referansı
+function getItemsCollectionRef() {
+  return collection(
     db,
     "topCategories",
     currentCategoryId,
@@ -26,144 +61,255 @@ export async function loadItems() {
     currentSubCategoryId,
     "items"
   );
+}
 
-  const snap = await getDocs(path);
+// -------------------------------------------------------------
+// INPUT FIELDS SHOW/HIDE
+// -------------------------------------------------------------
+function updateItemFieldVisibility() {
+  const type = $("#it-type").value;
 
-  let rows = "";
-  snap.forEach((d) => {
-    const x = d.data();
-    let content =
-      x.type === "text"
-        ? x.text ?? ""
-        : x.type === "image"
-        ? x.imageUrl ?? ""
-        : x.type === "video"
-        ? x.videoUrl ?? ""
-        : x.type === "audio"
-        ? x.audioUrl ?? ""
-        : x.type === "pdf"
-        ? x.pdfUrl ?? ""
-        : "";
+  document
+    .querySelectorAll(".item-field")
+    .forEach((el) => el.classList.add("hidden"));
 
-    rows += `
-<tr>
-    <td class="mono small">${x.id ?? d.id}</td>
-    <td>${x.type ?? ""}</td>
-    <td>${x.title ?? ""}</td>
-    <td>
-        <input type="number" data-item-sort="${d.id}" value="${
-      x.sort_order ?? ""
+  const target = document.querySelector(`.item-${type}`);
+  if (target) target.classList.remove("hidden");
+}
+
+$("#it-type").addEventListener("change", () => {
+  updateItemFieldVisibility();
+  $("#it-text").value =
+    $("#it-image").value =
+    $("#it-video").value =
+    $("#it-audio").value =
+    $("#it-pdf").value =
+      "";
+});
+
+// -------------------------------------------------------------
+// ITEMS LOAD
+// -------------------------------------------------------------
+export async function loadItems() {
+  if (!currentCategoryId || !currentSubCategoryId) return;
+
+  updateItemFieldVisibility();
+
+  const listEl = $("#it-list");
+  listEl.innerHTML = "<tr><td colspan='5'>Yükleniyor…</td></tr>";
+
+  const snap = await getDocs(getItemsCollectionRef());
+  const arr = [];
+
+  snap.forEach((d) => arr.push({ _docId: d.id, ...d.data() }));
+
+  arr.sort((a, b) => (a.sort_order || 999999) - (b.sort_order || 999999));
+
+  let html = "";
+  arr.forEach((x) => {
+    const docId = x._docId;
+    const content =
+      x.text || x.imageUrl || x.videoUrl || x.audioUrl || x.pdfUrl || "";
+
+    html += `
+<tr class="item-row" draggable="true" data-id="${docId}">
+  <td>${x.id}</td>
+  <td>${x.type}</td>
+  <td>${x.title}</td>
+  <td>
+    <div>
+      <input type="number" data-item-sort="${docId}" value="${
+      x.sort_order || ""
     }" style="width:60px">
-        <button class="btn small" data-item-save="${d.id}">Kaydet</button>
-        <div class="small mono">${(content || "")
-          .toString()
-          .slice(0, 80)}…</div>
-    </td>
-    <td><button class="btn warn small" data-del="${d.id}">Sil</button></td>
+      <button class="btn small" data-item-save="${docId}">Kaydet</button>
+    </div>
+    <div class="small mono">${content.slice(0, 80)}…</div>
+  </td>
+  <td><button class="btn warn small" data-del="${docId}">Sil</button></td>
 </tr>`;
   });
 
   listEl.innerHTML =
-    rows || "<tr><td colspan='5' class='muted'>Item yok.</td></tr>";
+    html || "<tr><td colspan='5' class='muted'>Item yok.</td></tr>";
 
-  // sort_order güncelleme
+  // Silme
+  listEl.querySelectorAll("[data-del]").forEach((btn) => {
+    btn.onclick = async () => {
+      await deleteDoc(doc(getItemsCollectionRef(), btn.dataset.del));
+      loadItems();
+    };
+  });
+
+  // Manuel sıralama
   listEl.querySelectorAll("[data-item-save]").forEach((btn) => {
     btn.onclick = async () => {
       const id = btn.dataset.itemSave;
-      const input = listEl.querySelector(`input[data-item-sort="${id}"]`);
-      const val = Number(input.value || 0);
-
-      await updateDoc(
-        doc(
-          db,
-          "topCategories",
-          currentCategoryId,
-          "subCategories",
-          currentSubCategoryId,
-          "items",
-          id
-        ),
-        { sort_order: val }
+      const newPos = Math.max(
+        1,
+        parseInt(
+          listEl.querySelector(`input[data-item-sort="${id}"]`).value,
+          10
+        )
       );
 
-      alert("✅ Item sort_order güncellendi!");
+      const snap = await getDocs(getItemsCollectionRef());
+      const arr = [];
+
+      snap.forEach((d) =>
+        arr.push({
+          id: d.id,
+          sort_order: d.data().sort_order || 999999,
+        })
+      );
+
+      arr.sort((a, b) => a.sort_order - b.sort_order);
+
+      const from = arr.findIndex((x) => x.id === id);
+      const to = Math.min(newPos - 1, arr.length - 1);
+
+      const [moved] = arr.splice(from, 1);
+      arr.splice(to, 0, moved);
+
+      const batch = writeBatch(db);
+      arr.forEach((x, i) => {
+        batch.update(doc(getItemsCollectionRef(), x.id), {
+          sort_order: i + 1,
+        });
+      });
+
+      await batch.commit();
+      toast($("#it-status"), "Sıra güncellendi", true);
       loadItems();
     };
   });
 
-  // sil
-  listEl.querySelectorAll("[data-del]").forEach((btn) => {
-    btn.onclick = async () => {
-      const ref = doc(
-        db,
-        "topCategories",
-        currentCategoryId,
-        "subCategories",
-        currentSubCategoryId,
-        "items",
-        btn.dataset.del
-      );
-      await deleteDoc(ref);
+  setupDragAndDrop(listEl);
+}
+
+// -------------------------------------------------------------
+// DRAG & DROP
+// -------------------------------------------------------------
+function setupDragAndDrop(listEl) {
+  let dragSrc = null;
+
+  listEl.querySelectorAll("tr.item-row").forEach((row) => {
+    row.addEventListener("dragstart", () => {
+      dragSrc = row;
+      row.classList.add("dragging");
+    });
+
+    row.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      if (!dragSrc || dragSrc === row) return;
+      const rect = row.getBoundingClientRect();
+      const offset = e.clientY - rect.top;
+      if (offset < rect.height / 2) listEl.insertBefore(dragSrc, row);
+      else listEl.insertBefore(dragSrc, row.nextSibling);
+    });
+
+    row.addEventListener("dragend", async () => {
+      row.classList.remove("dragging");
+      const rows = [...listEl.querySelectorAll("tr.item-row")];
+
+      const batch = writeBatch(db);
+      rows.forEach((r, index) => {
+        batch.update(doc(getItemsCollectionRef(), r.dataset.id), {
+          sort_order: index + 1,
+        });
+      });
+
+      await batch.commit();
+      toast($("#it-status"), "Sürükle-bırak kaydedildi", true);
       loadItems();
-    };
+    });
   });
 }
 
-// Item kaydet / güncelle
+// -------------------------------------------------------------
+// CREATE ITEM
+// -------------------------------------------------------------
+// -------------------------------------------------------------
+// CREATE ITEM (AUTO TITLE + USER OVERRIDE)
+// -------------------------------------------------------------
 $("#it-save").onclick = async () => {
   if (
-    !["funny_texts", "special_days"].includes(currentCategoryId) ||
-    !currentSubCategoryId
+    !["funny_texts", "special_days"].includes(currentCategoryId) &&
+    currentCategoryId !== "grades"
   ) {
-    toast(
-      $("#it-status"),
-      "Önce geçerli bir kategori → subCategory seç",
-      false
-    );
+    toast($("#it-status"), "Geçerli kategori seç", false);
     return;
   }
 
-  const id = $("#it-id").value.trim();
   const type = $("#it-type").value;
 
-  if (!id) {
-    toast($("#it-status"), "id gerekli", false);
-    return;
+  // nextOrder hesapla
+  let nextOrder = 1;
+  const snap = await getDocs(getItemsCollectionRef());
+  snap.forEach((d) => {
+    const so = d.data().sort_order || 0;
+    if (so >= nextOrder) nextOrder = so + 1;
+  });
+
+  // ID üret
+  let id = "";
+
+  if (currentCategoryId === "grades") {
+    const gradeNumber = currentSubCategoryId.replace(/[^0-9]/g, "") || "0";
+
+    id = [
+      `g${gradeNumber}`,
+      slugify(window.currentLessonId),
+      slugify(window.currentTopicId),
+      slugify(type),
+      nextOrder,
+    ].join("_");
+  } else {
+    id = `${slugify(currentSubCategoryId)}_${nextOrder}`;
   }
 
+  // -------------------------------------------------------------
+  // AUTO TITLE + USER OVERRIDE
+  // -------------------------------------------------------------
+  let autoTitle = "";
+  let userTitle = $("#it-title").value.trim();
+
+  if (currentCategoryId === "grades") {
+    autoTitle = `${toReadable(window.currentTopicId)} ${typeToReadable(
+      type
+    )} ${nextOrder}`;
+  } else {
+    autoTitle = `${toReadable(currentSubCategoryId)} ${nextOrder}`;
+  }
+
+  // Kullanıcı kendi başlık yazdıysa onu kullan, boşsa otomatik yaz
+  const finalTitle = userTitle || autoTitle;
+
+  // -------------------------------------------------------------
+  // SAVE PAYLOAD
+  // -------------------------------------------------------------
   const payload = {
     id,
     type,
-    title: $("#it-title").value.trim() || null,
-    text: type === "text" ? $("#it-text").value.trim() || null : null,
-    imageUrl: type === "image" ? $("#it-image").value.trim() || null : null,
-    videoUrl: type === "video" ? $("#it-video").value.trim() || null : null,
-    audioUrl: type === "audio" ? $("#it-audio").value.trim() || null : null,
-    pdfUrl: type === "pdf" ? $("#it-pdf").value.trim() || null : null,
+    title: finalTitle,
+    text: type === "text" ? $("#it-text").value.trim() : null,
+    imageUrl: type === "image" ? $("#it-image").value.trim() : null,
+    videoUrl: type === "video" ? $("#it-video").value.trim() : null,
+    audioUrl: type === "audio" ? $("#it-audio").value.trim() : null,
+    pdfUrl: type === "pdf" ? $("#it-pdf").value.trim() : null,
+    sort_order: nextOrder,
   };
 
-  const ref = doc(
-    db,
-    "topCategories",
-    currentCategoryId,
-    "subCategories",
-    currentSubCategoryId,
-    "items",
-    id
-  );
+  await setDoc(doc(getItemsCollectionRef(), id), payload);
 
-  await setDoc(ref, payload, { merge: true });
+  toast($("#it-status"), "Item kaydedildi", true);
 
-  toast($("#it-status"), "Item kaydedildi");
-
-  // temizle
-  $("#it-id").value = "";
-  $("#it-title").value = "";
-  $("#it-text").value = "";
-  $("#it-image").value = "";
-  $("#it-video").value = "";
-  $("#it-audio").value = "";
-  $("#it-pdf").value = "";
+  $("#it-title").value = ""; // kullanıcı girdiği başlık temizlenir
+  $("#it-text").value =
+    $("#it-image").value =
+    $("#it-video").value =
+    $("#it-audio").value =
+    $("#it-pdf").value =
+      "";
 
   loadItems();
 };

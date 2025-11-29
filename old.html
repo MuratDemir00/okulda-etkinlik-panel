@@ -244,7 +244,9 @@
 
 <body>
     <header>
-        <h1>📚 Firestore Yönetim Paneli</h1>
+        <h1>📚 Firestore Yönetim Paneli</h1> <button id="logoutBtn" class="btn warn small">
+            🚪 Çıkış Yap
+        </button>
         <div class="tabs">
             <button class="tab active" data-tab="movingTexts">movingTexts</button>
             <button class="tab" data-tab="appSettings">app_settings / ads</button>
@@ -513,6 +515,20 @@
 
         </section>
     </main>
+
+    <script type="module">
+        import { logout } from "./js/firebase.js";
+
+        document.getElementById("logoutBtn").onclick = async () => {
+            await logout();
+            window.location.href = "login.html";
+        };
+    </script>
+
+    <script type="module">
+        import { requireAdmin } from "./js/firebase.js";
+        requireAdmin(); // 🔥 admin değilse login.html’e atar
+    </script>
 
     <script type="module">
         // ===== Firebase =====

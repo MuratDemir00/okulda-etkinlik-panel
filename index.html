@@ -15,6 +15,9 @@
         <button onclick="location.href='old.html'" class="btn primary small">
             ⬅️ Eski Görünüme Git
         </button>
+        <button id="logoutBtn" class="btn warn small">
+            🚪 Çıkış Yap
+        </button>
     </div>
 
     <header>
@@ -141,10 +144,10 @@
 
                 <!-- funny_texts için items -->
                 <div id="items-box" class="card hidden" style="margin-top:16px">
-                    <h4>🎯 Items (sadece <code>funny_texts</code> kategorisi için)</h4>
+                    <h4>🎯 Items (sadece <code>funny_texts</code> ve <code>special_days</code> kategorileri için)</h4>
 
                     <div class="row">
-                        <input id="it-id" placeholder="id (ör: bilmece_1)" />
+
                         <select id="it-type">
                             <option value="text">text</option>
                             <option value="image">image</option>
@@ -156,14 +159,20 @@
                     </div>
 
                     <div class="row" style="margin-top:8px">
-                        <textarea id="it-text" placeholder="text (type=text ise)"></textarea>
-                        <input id="it-image" placeholder="imageUrl (type=image ise)" />
-                        <input id="it-video" placeholder="videoUrl (type=video ise)" />
-                        <input id="it-audio" placeholder="audioUrl (type=audio ise)" />
-                        <input id="it-pdf" placeholder="pdfUrl (type=pdf ise)" />
+                        <textarea id="it-text" class="item-field item-text hidden"
+                            placeholder="text (type=text ise)"></textarea>
+                        <input id="it-image" class="item-field item-image hidden"
+                            placeholder="imageUrl (type=image ise)" />
+                        <input id="it-video" class="item-field item-video hidden"
+                            placeholder="videoUrl (type=video ise)" />
+                        <input id="it-audio" class="item-field item-audio hidden"
+                            placeholder="audioUrl (type=audio ise)" />
+                        <input id="it-pdf" class="item-field item-pdf hidden" placeholder="pdfUrl (type=pdf ise)" />
+
                         <button class="btn primary" id="it-save">Item Kaydet</button>
                         <span id="it-status" class="help"></span>
                     </div>
+
 
                     <div class="hr"></div>
                     <table>
@@ -183,6 +192,7 @@
                 <!-- GRADES DERS / KONU / İÇERİK YÖNETİCİSİ -->
                 <div id="grades-box" class="card hidden" style="margin-top:16px">
                     <h3>📚 Dersler (Lessons)</h3>
+                    <span id="lesson-status" class="help"></span>
 
                     <div class="row">
                         <input id="lesson-id" placeholder="Ders id (ör: fen)" />
@@ -205,6 +215,7 @@
 
                     <div id="topics-box" class="card hidden" style="margin-top:16px">
                         <h4>📘 Konular (Topics) — <span id="lesson-label"></span></h4>
+                        <span id="topic-status" class="help"></span>
 
                         <div class="row">
                             <input id="topic-id" placeholder="Konu id (ör: besinler)" />
@@ -227,6 +238,8 @@
 
                         <div id="content-box" class="card hidden" style="margin-top:16px">
                             <h4>📂 İçerikler — <span id="topic-label"></span></h4>
+                            <span id="content-status" class="help"></span>
+
 
                             <div class="grid-3" style="margin-bottom:12px">
                                 <label class="small muted">İçerik Türü
@@ -287,6 +300,20 @@
 
         </section>
     </main>
+
+    <script type="module">
+        import { logout } from "./js/firebase.js";
+
+        document.getElementById("logoutBtn").onclick = async () => {
+            await logout();
+            window.location.href = "login.html";
+        };
+    </script>
+
+    <script type="module">
+        import { requireAdmin } from "./js/firebase.js";
+        requireAdmin(); // 🔥 admin değilse login.html’e atar
+    </script>
 
     <script type="module" src="./js/firebase.js"></script>
     <script type="module" src="./js/helpers.js"></script>
